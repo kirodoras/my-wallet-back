@@ -104,6 +104,26 @@ app.post("/ios", async (req, res) => {
     }
 });
 
+app.get("/ios", async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const ios = await db.collection("ios").findOne({ idUser: email });
+
+        if (!ios) {
+            res.sendStatus(404);
+            return;
+        }
+
+        res.status(200).send(ios);
+        return;
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+        return;
+    }
+});
+
 app.listen(port, () => {
     console.log(`Running on ${port}`);
 });
