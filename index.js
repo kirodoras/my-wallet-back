@@ -77,6 +77,7 @@ app.get("/user", async (req, res) => {
 
 app.post("/ios", async (req, res) => {
     const { email, transaction } = req.body;
+    const { type, value, description } = transaction;
 
     try {
         const ios = await db.collection("ios").findOne({ idUser: email });
@@ -86,12 +87,24 @@ app.post("/ios", async (req, res) => {
             return;
         }
 
+        const day = dayjs().format('DD/MM');
+
         await db.collection("ios").updateOne(
             {
                 idUser: email
             },
             {
-                $push: { transactions: transaction }
+                $push: {
+                    transactions: {
+                        $each: [{
+                            type,
+                            value,
+                            description,
+                            day
+                        }],
+                        $position: 0
+                    }
+                }
             }
         );
 
