@@ -45,7 +45,30 @@ app.post("/user", async (req, res) => {
     }
 });
 
+app.get("/user", async (req, res) => {
+    const { email, password } = req.body;
 
+    try {
+        const user = await db.collection("users").findOne({ email: email });
+
+        if (!user) {
+            res.sendStatus(404);
+            return;
+        }
+
+        if (password !== user.password) {
+            res.sendStatus(401);
+            return;
+        }
+
+        res.status(202).send(user);
+        return;
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+        return;
+    }
+});
 
 app.listen(port, () => {
     console.log(`Running on ${port}`);
