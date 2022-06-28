@@ -30,10 +30,15 @@ app.post("/user", async (req, res) => {
             return;
         }
 
-        db.collection("users").insertOne({
+        await db.collection("users").insertOne({
             name,
             email,
             password
+        });
+
+        await db.collection("ios").insertOne({
+            idUser: email,
+            transactions: []
         });
 
         res.sendStatus(201);
@@ -62,6 +67,35 @@ app.get("/user", async (req, res) => {
         }
 
         res.status(202).send(user);
+        return;
+    } catch (error) {
+        console.error(error);
+        res.sendStatus(500);
+        return;
+    }
+});
+
+app.post("/ios", async (req, res) => {
+    const { email, transaction } = req.body;
+
+    try {
+        const ios = await db.collection("ios").findOne({ idUser: email });
+
+        if (!ios) {
+            res.sendStatus(404);
+            return;
+        }
+
+        await db.collection("ios").updateOne(
+            {
+                idUser: email
+            },
+            {
+                $push: { transactions: transaction }
+            }
+        );
+
+        res.sendStatus(201);
         return;
     } catch (error) {
         console.error(error);
