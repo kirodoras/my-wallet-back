@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { MongoClient, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
+import bcrypt from 'bcrypt';
 import joi from 'joi';
 import dayjs from 'dayjs';
 
@@ -30,10 +31,12 @@ app.post("/user", async (req, res) => {
             return;
         }
 
+        const passwordHash = bcrypt.hashSync(password, 10);
+
         await db.collection("users").insertOne({
             name,
             email,
-            password
+            passwordHash
         });
 
         const { _id } = await db.collection("users").findOne({ email: email });
@@ -58,19 +61,14 @@ app.get("/user", async (req, res) => {
 
     try {
         const user = await db.collection("users").findOne({ email: email });
-
-        if (!user) {
+        console.log()
+        if (user && bcrypt.compareSync(password, user.passwordHash)) {
+            res.status(202).send(user);
+            return;
+        } else {
             res.sendStatus(404);
             return;
         }
-
-        if (password !== user.password) {
-            res.sendStatus(401);
-            return;
-        }
-
-        res.status(202).send(user);
-        return;
     } catch (error) {
         console.error(error);
         res.sendStatus(500);
