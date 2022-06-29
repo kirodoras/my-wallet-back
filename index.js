@@ -3,6 +3,7 @@ import cors from 'cors';
 import { MongoClient, ObjectId } from 'mongodb';
 import dotenv from 'dotenv';
 import bcrypt from 'bcrypt';
+import { v4 as uuid } from 'uuid';
 import joi from 'joi';
 import dayjs from 'dayjs';
 
@@ -61,9 +62,28 @@ app.get("/user", async (req, res) => {
 
     try {
         const user = await db.collection("users").findOne({ email: email });
-        console.log()
+
         if (user && bcrypt.compareSync(password, user.passwordHash)) {
-            res.status(202).send(user);
+            const token = uuid();
+
+            const userSession = await db.collection("sessions").findOne({ idUser: user._id });
+
+            if (userSession) {
+                await db.collection("sessions").updateOne(
+                    { _id: userSession._id },
+                    { $set: { token } }
+                );
+
+            } else {
+                await db.collection("sessions").insertOne({
+                    idUser: user._id,
+                    token
+                });
+            }
+            res.status(202).send({
+                name: user.name,
+                token
+            });
             return;
         } else {
             res.sendStatus(404);
@@ -77,11 +97,19 @@ app.get("/user", async (req, res) => {
 });
 
 app.post("/ios", async (req, res) => {
-    const { _id, transaction } = req.body;
-    const { type, value, description } = transaction;
+    const { authorization } = req.headers;
+    const token = authorization?.replace('Bearer ', '');
+    const { type, value, description } = req.body;
 
     try {
-        const ios = await db.collection("ios").findOne({ idUser: ObjectId(_id) });
+        const userSession = await db.collection("sessions").findOne({ token: token });
+
+        if (!userSession) {
+            res.sendStatus(400);
+            return;
+        }
+
+        const ios = await db.collection("ios").findOne({ idUser: userSession.idUser });
 
         if (!ios) {
             res.sendStatus(404);
@@ -100,7 +128,7 @@ app.post("/ios", async (req, res) => {
 
         await db.collection("ios").updateOne(
             {
-                idUser: ObjectId(_id)
+                idUser: userSession.idUser
             },
             {
                 $push: {
@@ -128,10 +156,18 @@ app.post("/ios", async (req, res) => {
 });
 
 app.get("/ios", async (req, res) => {
-    const { _id } = req.body;
+    const { authorization } = req.headers;
+    const token = authorization?.replace('Bearer ', '');
 
     try {
-        const ios = await db.collection("ios").findOne({ idUser: ObjectId(_id) });
+        const userSession = await db.collection("sessions").findOne({ token: token });
+
+        if (!userSession) {
+            res.sendStatus(400);
+            return;
+        }
+
+        const ios = await db.collection("ios").findOne({ idUser: userSession.idUser });
 
         if (!ios) {
             res.sendStatus(404);
