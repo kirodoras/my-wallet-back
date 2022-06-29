@@ -38,6 +38,7 @@ app.post("/user", async (req, res) => {
 
         await db.collection("ios").insertOne({
             idUser: email,
+            balance: 0,
             transactions: []
         });
 
@@ -87,6 +88,14 @@ app.post("/ios", async (req, res) => {
             return;
         }
 
+        const { balance } = ios;
+        let newBalance = 0;
+        if (type === 'input') {
+            newBalance = Number((balance + value).toFixed(2));
+        } else {
+            newBalance = Number((balance - value).toFixed(2));
+        }
+
         const day = dayjs().format('DD/MM');
 
         await db.collection("ios").updateOne(
@@ -104,7 +113,8 @@ app.post("/ios", async (req, res) => {
                         }],
                         $position: 0
                     }
-                }
+                },
+                $set: { balance: newBalance }
             }
         );
 
