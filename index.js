@@ -36,8 +36,10 @@ app.post("/user", async (req, res) => {
             password
         });
 
+        const { _id } = await db.collection("users").findOne({ email: email });
+
         await db.collection("ios").insertOne({
-            idUser: email,
+            idUser: _id,
             balance: 0,
             transactions: []
         });
@@ -77,11 +79,11 @@ app.get("/user", async (req, res) => {
 });
 
 app.post("/ios", async (req, res) => {
-    const { email, transaction } = req.body;
+    const { _id, transaction } = req.body;
     const { type, value, description } = transaction;
 
     try {
-        const ios = await db.collection("ios").findOne({ idUser: email });
+        const ios = await db.collection("ios").findOne({ idUser: ObjectId(_id) });
 
         if (!ios) {
             res.sendStatus(404);
@@ -100,7 +102,7 @@ app.post("/ios", async (req, res) => {
 
         await db.collection("ios").updateOne(
             {
-                idUser: email
+                idUser: ObjectId(_id)
             },
             {
                 $push: {
@@ -128,10 +130,10 @@ app.post("/ios", async (req, res) => {
 });
 
 app.get("/ios", async (req, res) => {
-    const { email } = req.body;
+    const { _id } = req.body;
 
     try {
-        const ios = await db.collection("ios").findOne({ idUser: email });
+        const ios = await db.collection("ios").findOne({ idUser: ObjectId(_id) });
 
         if (!ios) {
             res.sendStatus(404);
