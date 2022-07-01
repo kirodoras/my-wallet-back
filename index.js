@@ -21,7 +21,7 @@ mongoClient.connect().then(() => {
     db = mongoClient.db("myWallet");
 });
 
-app.post("/user", async (req, res) => {
+app.post("/sign-up", async (req, res) => {
     const { name, email, password } = req.body;
 
     try {
@@ -57,11 +57,16 @@ app.post("/user", async (req, res) => {
     }
 });
 
-app.get("/user", async (req, res) => {
+app.post("/sign-in", async (req, res) => {
     const { email, password } = req.body;
 
     try {
         const user = await db.collection("users").findOne({ email: email });
+
+        if (!user) {
+            res.sendStatus(404);
+            return;
+        }
 
         if (user && bcrypt.compareSync(password, user.passwordHash)) {
             const token = uuid();
@@ -86,7 +91,7 @@ app.get("/user", async (req, res) => {
             });
             return;
         } else {
-            res.sendStatus(404);
+            res.sendStatus(401);
             return;
         }
     } catch (error) {
