@@ -34,13 +34,14 @@ app.post("/sign-up", async (req, res) => {
 
         const passwordHash = bcrypt.hashSync(password, 10);
 
+        const _id = ObjectId();
+
         await db.collection("users").insertOne({
+            _id,
             name,
             email,
             passwordHash
         });
-
-        const { _id } = await db.collection("users").findOne({ email: email });
 
         await db.collection("ios").insertOne({
             idUser: _id,
