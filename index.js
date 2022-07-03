@@ -21,7 +21,33 @@ mongoClient.connect().then(() => {
     db = mongoClient.db("myWallet");
 });
 
+const signUpSchema = joi.object({
+    name: joi.string().required(),
+    email: joi.string().email().required(),
+    password: joi.string().required()
+});
+
+const signInSchema = joi.object({
+    email: joi.string().email().required(),
+    password: joi.string().required()
+});
+
+const tokenSchema = joi.string().required();
+
+const ioSchema = joi.object({
+    type: joi.string().valid('input', 'output').required(),
+    value: joi.number().required(),
+    description: joi.string().required()
+});
+
 app.post("/sign-up", async (req, res) => {
+    const validationBody = signUpSchema.validate(req.body);
+
+    if (validationBody.error) {
+        res.sendStatus(422);
+        return;
+    }
+
     const { name, email, password } = req.body;
 
     try {
@@ -59,6 +85,13 @@ app.post("/sign-up", async (req, res) => {
 });
 
 app.post("/sign-in", async (req, res) => {
+    const validationBody = signInSchema.validate(req.body);
+
+    if (validationBody.error) {
+        res.sendStatus(422);
+        return;
+    }
+
     const { email, password } = req.body;
 
     try {
@@ -106,6 +139,14 @@ app.post("/ios", async (req, res) => {
     const { authorization } = req.headers;
     const token = authorization?.replace('Bearer ', '');
     const { type, value, description } = req.body;
+
+    const validationBody = ioSchema.validate(req.body);
+    const validationToken = tokenSchema.validate(token);
+
+    if (validationBody.error || validationToken.error) {
+        res.sendStatus(422);
+        return;
+    }
 
     try {
         const userSession = await db.collection("sessions").findOne({ token: token });
@@ -164,6 +205,13 @@ app.post("/ios", async (req, res) => {
 app.get("/ios", async (req, res) => {
     const { authorization } = req.headers;
     const token = authorization?.replace('Bearer ', '');
+
+    const validationToken = tokenSchema.validate(token);
+
+    if (validationToken.error) {
+        res.sendStatus(422);
+        return;
+    }
 
     try {
         const userSession = await db.collection("sessions").findOne({ token: token });
