@@ -2,18 +2,7 @@ import { ObjectId } from 'mongodb';
 import { db } from '../databases/mongoClientDb.js';
 import bcrypt from 'bcrypt';
 import { v4 as uuid } from 'uuid';
-import joi from 'joi';
-
-const signUpSchema = joi.object({
-    name: joi.string().required(),
-    email: joi.string().email().required(),
-    password: joi.string().required()
-});
-
-const signInSchema = joi.object({
-    email: joi.string().email().required(),
-    password: joi.string().required()
-});
+import { signUpSchema, signInSchema } from '../schemas/authShemas.js';
 
 export async function registerUser(req, res) {
     const validationBody = signUpSchema.validate(req.body);

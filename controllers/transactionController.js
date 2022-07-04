@@ -1,14 +1,7 @@
 import { db } from '../databases/mongoClientDb.js';
-import joi from 'joi';
 import dayjs from 'dayjs';
+import { tokenSchema, ioSchema } from '../schemas/transactionShemas.js';
 
-const tokenSchema = joi.string().required();
-
-const ioSchema = joi.object({
-    type: joi.string().valid('input', 'output').required(),
-    value: joi.number().required(),
-    description: joi.string().required()
-});
 
 export async function insertTransaction(req, res) {
     const { authorization } = req.headers;
