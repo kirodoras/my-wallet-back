@@ -1,20 +1,9 @@
 import { db } from '../databases/mongoClientDb.js';
 import dayjs from 'dayjs';
-import { tokenSchema, ioSchema } from '../schemas/transactionShemas.js';
-
 
 export async function insertTransaction(req, res) {
-    const { authorization } = req.headers;
-    const token = authorization?.replace('Bearer ', '');
     const { type, value, description } = req.body;
-
-    const validationBody = ioSchema.validate(req.body);
-    const validationToken = tokenSchema.validate(token);
-
-    if (validationBody.error || validationToken.error) {
-        res.sendStatus(422);
-        return;
-    }
+    const token = res.locals.token;
 
     try {
         const userSession = await db.collection("sessions").findOne({ token: token });
@@ -71,15 +60,7 @@ export async function insertTransaction(req, res) {
 }
 
 export async function getTransactions(req, res) {
-    const { authorization } = req.headers;
-    const token = authorization?.replace('Bearer ', '');
-
-    const validationToken = tokenSchema.validate(token);
-
-    if (validationToken.error) {
-        res.sendStatus(422);
-        return;
-    }
+    const token = res.locals.token;
 
     try {
         const userSession = await db.collection("sessions").findOne({ token: token });

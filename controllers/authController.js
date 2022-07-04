@@ -2,16 +2,8 @@ import { ObjectId } from 'mongodb';
 import { db } from '../databases/mongoClientDb.js';
 import bcrypt from 'bcrypt';
 import { v4 as uuid } from 'uuid';
-import { signUpSchema, signInSchema } from '../schemas/authShemas.js';
 
 export async function registerUser(req, res) {
-    const validationBody = signUpSchema.validate(req.body);
-
-    if (validationBody.error) {
-        res.sendStatus(422);
-        return;
-    }
-
     const { name, email, password } = req.body;
 
     try {
@@ -49,13 +41,6 @@ export async function registerUser(req, res) {
 }
 
 export async function connectUser(req, res) {
-    const validationBody = signInSchema.validate(req.body);
-
-    if (validationBody.error) {
-        res.sendStatus(422);
-        return;
-    }
-
     const { email, password } = req.body;
 
     try {
